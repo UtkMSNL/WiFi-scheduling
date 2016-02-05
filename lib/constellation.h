@@ -240,8 +240,30 @@ inline VlcMod::VlcMod(int n, int nBitPerMarker, int nBackup) {
 			bitLen = QAM28_bitLen;
 			lenSet = QAM28_lenSet;
 			break;
+		case 40:
+			codeword = QAM40_code;
+			constellation_nonMarker = QAM40_D;
+			constellation_marker = QAM40_3bitMarker_D;
+			bitLen = QAM40_bitLen;
+			lenSet = QAM40_lenSet;
+			break;
+		case 48:
+			codeword = QAM48_code;
+			constellation_nonMarker = QAM48_D;
+			constellation_marker = QAM48_3bitMarker_D;
+			bitLen = QAM48_bitLen;
+			lenSet = QAM48_lenSet;
+			break;
+		case 56:
+			codeword = QAM56_code;
+			constellation_nonMarker = QAM56_D;
+			constellation_marker = QAM56_3bitMarker_D;
+			bitLen = QAM56_bitLen;
+			lenSet = QAM56_lenSet;
+			break;
 		default:
-			std::cerr << "The input QAM is not supported";
+			std::cerr << "Constructor of VlcMod failed: The input QAM is not supported (" 
+				<< nQAM << ")" << std::endl;
 	}
 	buildDecodingTree();
 }

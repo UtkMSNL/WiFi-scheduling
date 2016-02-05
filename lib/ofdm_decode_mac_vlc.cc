@@ -471,16 +471,17 @@ int decode_vlc() {
 	 nBitsPadding	- Number of padding bits to assemble a full symbol
 	*/
 	dout << "entering decode_vlc\n";
-	/*
+
 	int psduSize = 159;
 	int nSubcarPadding = 24;
 	int nBitsPadding = 0;
 	VlcMod &vlcMod = vlcMod24;
-	*/
+	/*
 	int psduSize = 159;
 	int nSubcarPadding = 4;
 	int nBitsPadding = 1;
-	VlcMod &vlcMod = vlcMod12;
+	VlcMod &vlcMod = vlcMod24;
+	*/
 	int numOfMarkers = calc_nMarker(nSymTot, nSubcarPadding, vlcMod.nMarker);
 	int numOfNonMarkers = calc_nNonMarker(nSymTot, numOfMarkers, nSubcarPadding);
 	int nBitsTot = calc_totBits(psduSize, nBitsPadding, 0.5);
@@ -690,7 +691,7 @@ private:
 	Modulator<std::complex<double> > qam16;
 	Modulator<std::complex<double> > qam64;
 
-	int nSymTot = 13;	// total symbols (48 subcarriers) to be captured
+	int nSymTot = 14;	// total symbols (48 subcarriers) to be captured
 
 	VlcMod vlcMod10 = VlcMod(10,2,2);
 	VlcMod vlcMod12 = VlcMod(12,2,2);
