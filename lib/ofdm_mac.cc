@@ -13,6 +13,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Log:
+ * 	2016/02/05 - Fix the sequence number rather than incrementing it
  */
 #include <ieee802-11/ofdm_mac.h>
 
@@ -146,7 +148,7 @@ void generate_mac_data_frame(const char *msdu, int msdu_size, int *psdu_size) {
 		}
 	}
 	header.seq_nr = htole16(header.seq_nr);	// WHY? convert from host byte order to little-endian order
-	d_seq_nr++;
+	// d_seq_nr++; // Commented by Haoyang - fix the sequence number
 
 	//header size is 24, plus 4 for FCS means 28 bytes
 	*psdu_size = 28 + msdu_size;
