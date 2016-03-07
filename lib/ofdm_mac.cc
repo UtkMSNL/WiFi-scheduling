@@ -15,6 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * Log:
  * 	2016/02/05 - Fix the sequence number rather than incrementing it
+ *	2016/03/07 - Add a parameter "FCS"	- True: Append 4 byte CRC (default, same as original code)
+ *										- False: Do not add CRC
+ *				This is to be compatible with UwiCore work. If not using CRC,
+ *				then CRC will be added on the OFDM mapper module
  */
 #include <ieee802-11/ofdm_mac.h>
 
@@ -40,11 +44,12 @@ class ofdm_mac_impl : public ofdm_mac {
 
 public:
 
-ofdm_mac_impl(std::vector<uint8_t> src_mac, std::vector<uint8_t> dst_mac, std::vector<uint8_t> bss_mac) :
+ofdm_mac_impl(std::vector<uint8_t> src_mac, std::vector<uint8_t> dst_mac, std::vector<uint8_t> bss_mac, bool fcs) :
 		block("ofdm_mac",
 			gr::io_signature::make(0, 0, 0),
 			gr::io_signature::make(0, 0, 0)),
-		d_seq_nr(0) {
+		d_seq_nr(0),
+		d_fcs(fcs) {
 
 	message_port_register_out(pmt::mp("phy out"));
 	message_port_register_out(pmt::mp("app out"));
@@ -150,19 +155,38 @@ void generate_mac_data_frame(const char *msdu, int msdu_size, int *psdu_size) {
 	header.seq_nr = htole16(header.seq_nr);	// WHY? convert from host byte order to little-endian order
 	// d_seq_nr++; // Commented by Haoyang - fix the sequence number
 
-	//header size is 24, plus 4 for FCS means 28 bytes
-	*psdu_size = 28 + msdu_size;
+	if(d_fcs == true) {	// Same as original, plus 4 bytes for FCS
+		//header size is 24, plus 4 for FCS means 28 bytes
+		*psdu_size = 28 + msdu_size;
 
-	//copy mac header into psdu
-	std::memcpy(d_psdu, &header, 24);
-	//copy msdu into psdu
-	memcpy(d_psdu + 24, msdu, msdu_size);
-	//compute and store FCS - Frame Check Sequence (32 bit CRC)
-	boost::crc_32_type result;
-	result.process_bytes(d_psdu, msdu_size + 24);
+		//copy mac header into psdu
+		std::memcpy(d_psdu, &header, 24);
+		//copy msdu into psdu
+		memcpy(d_psdu + 24, msdu, msdu_size);
+		//compute and store FCS - Frame Check Sequence (32 bit CRC)
+		boost::crc_32_type result;
+		result.process_bytes(d_psdu, msdu_size + 24);
 
-	uint32_t fcs = result.checksum();
-	memcpy(d_psdu + msdu_size + 24, &fcs, sizeof(uint32_t));
+		uint32_t fcs = result.checksum();
+		memcpy(d_psdu + msdu_size + 24, &fcs, sizeof(uint32_t));
+	}
+	else {	// Added by Lu, do not plus 4 bytes for FCS
+		//header size is 24, plus 4 for FCS means 28 bytes
+		*psdu_size = 24 + msdu_size;
+
+		//copy mac header into psdu
+		std::memcpy(d_psdu, &header, 24);
+		//copy msdu into psdu
+		memcpy(d_psdu + 24, msdu, msdu_size);
+		/*
+			//compute and store FCS - Frame Check Sequence (32 bit CRC)
+			boost::crc_32_type result;
+			result.process_bytes(d_psdu, msdu_size + 24);
+
+			uint32_t fcs = result.checksum();
+			memcpy(d_psdu + msdu_size + 24, &fcs, sizeof(uint32_t));
+		*/	
+	}
 }
 
 bool check_mac(std::vector<uint8_t> mac) {
@@ -176,10 +200,12 @@ private:
 	uint8_t d_dst_mac[6];
 	uint8_t d_bss_mac[6];
 	uint8_t d_psdu[1528];
+	bool d_fcs;	// Added by Haoyang. True - (Same as original) Append four bytes CRC at the end of PSDU
+				// False: Do not append CRC, which will be done in the upcoming ofdm_mapper part
 };
 
 ofdm_mac::sptr
-ofdm_mac::make(std::vector<uint8_t> src_mac, std::vector<uint8_t> dst_mac, std::vector<uint8_t> bss_mac) {
-	return gnuradio::get_initial_sptr(new ofdm_mac_impl(src_mac, dst_mac, bss_mac));
+ofdm_mac::make(std::vector<uint8_t> src_mac, std::vector<uint8_t> dst_mac, std::vector<uint8_t> bss_mac, bool fcs) {
+	return gnuradio::get_initial_sptr(new ofdm_mac_impl(src_mac, dst_mac, bss_mac, fcs));
 }
 

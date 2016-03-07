@@ -13,10 +13,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Log:
+ * 2016/03/07 - Add a parameter "FCS"	- False: Do not add CRC (default, same as original code)
+ *										- True: Append 4 byte CRC
+ *				This is to be compatible with UwiCore work.
  */
 #include <ieee802-11/ofdm_mapper.h>
 #include "utils.h"
 #include <gnuradio/io_signature.h>
+#include <boost/crc.hpp>
 
 using namespace gr::ieee802_11;
 
@@ -26,14 +32,15 @@ public:
 
 static const int DATA_CARRIERS = 48;
 
-ofdm_mapper_impl(Encoding e, bool debug) :
+ofdm_mapper_impl(Encoding e, bool debug, bool fcs) :
 	block ("ofdm_mapper",
 			gr::io_signature::make(0, 0, 0),
 			gr::io_signature::make(1, 1, sizeof(char))),
 			d_symbols_offset(0),
 			d_symbols(NULL),
 			d_debug(debug),
-			d_ofdm(e) {
+			d_ofdm(e),
+			d_fcs(fcs) {
 
 	message_port_register_in(pmt::mp("in"));
 	set_encoding(e);
@@ -76,10 +83,31 @@ int general_work(int noutput, gr_vector_int& ninput_items,
 		if(pmt::is_pair(msg)) {
 			dout << "OFDM MAPPER: received new message" << std::endl;
 			gr::thread::scoped_lock lock(d_mutex);
-
+			
 			int psdu_length = pmt::blob_length(pmt::cdr(msg));
-			const char *psdu = static_cast<const char*>(pmt::blob_data(pmt::cdr(msg)));
+			const char *psdu1 = static_cast<const char*>(pmt::blob_data(pmt::cdr(msg)));
+			if(d_fcs == true) {
+				psdu_length += 4; // insert 4 bytes FCS here
+			}
+			char *psdu 			= (char*) calloc(psdu_length, sizeof(char));
+			if(d_fcs == true) {
+				dout << "OFDM mapper: Append CRC32 here" << std::endl;
+				//compute and store FCS - Frame Check Sequence (32 bit CRC)
+				boost::crc_32_type result;
+				result.process_bytes(psdu1, psdu_length-4);
 
+				uint32_t fcs = result.checksum();
+				memcpy(psdu, psdu1, psdu_length-4);
+				memcpy(psdu + psdu_length - 4, &fcs, sizeof(uint32_t));
+			}
+			else {
+				dout << "OFDM mapper: Do not append CRC32" << std::endl;
+				memcpy(psdu, psdu1, psdu_length);
+			}
+			
+			dout << "psdu_length: " << psdu_length << std::endl;
+			print_message(psdu, psdu_length);
+			
 			// ############ INSERT MAC STUFF
 			tx_param tx(d_ofdm, psdu_length);
 			if(tx.n_sym > MAX_SYM) {
@@ -138,7 +166,7 @@ int general_work(int noutput, gr_vector_int& ninput_items,
             add_item_tag(0, nitems_written(0), pmt::mp("encoding"),
                             encoding, srcid);
 
-
+			free(psdu);
 			free(data_bits);
 			free(scrambled_data);
 			free(encoded_data);
@@ -176,11 +204,12 @@ private:
 	char*        d_symbols;
 	int          d_symbols_offset;
 	int          d_symbols_len;
+	bool		 d_fcs;
 	ofdm_param   d_ofdm;
 	gr::thread::mutex d_mutex;
 };
 
 ofdm_mapper::sptr
-ofdm_mapper::make(Encoding mcs, bool debug) {
-	return gnuradio::get_initial_sptr(new ofdm_mapper_impl(mcs, debug));
+ofdm_mapper::make(Encoding mcs, bool debug, bool fcs) {
+	return gnuradio::get_initial_sptr(new ofdm_mapper_impl(mcs, debug, fcs));
 }

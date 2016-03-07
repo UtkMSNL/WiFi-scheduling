@@ -5,7 +5,7 @@
 	<key>ieee802_11_ofdm_mapper</key>
 	<category>IEEE802.11</category>
 	<import>import ieee802_11</import>
-	<make>ieee802_11.ofdm_mapper($encoding, $debug)</make>
+	<make>ieee802_11.ofdm_mapper($encoding, $debug, $fcs)</make>
 	<callback>set_encoding($encoding)</callback>
 
 	<param>
@@ -64,6 +64,22 @@
 		</option>
 	</param>
 
+	<param>
+		<name>Include CRC</name>
+		<key>fcs</key>
+		<value>False</value>
+		<type>bool</type>
+
+		<option>
+			<name>Yes</name>
+			<key>True</key>
+		</option>
+		<option>
+			<name>No</name>
+			<key>False</key>
+		</option>
+	</param>
+	
 	<check>$encoding in range(8)</check>
 
 	<sink>
