@@ -124,7 +124,10 @@ void app_in (pmt::pmt_t msg) {
 
 	// dict
 	pmt::pmt_t dict = pmt::make_dict();
-	dict = pmt::dict_add(dict, pmt::mp("crc_included"), pmt::PMT_T);
+	if(d_fcs)
+		dict = pmt::dict_add(dict, pmt::mp("crc_included"), pmt::PMT_T);
+	else
+		dict = pmt::dict_add(dict, pmt::mp("crc_included"), pmt::PMT_F);
 
 	// blob
 	pmt::pmt_t mac = pmt::make_blob(d_psdu, psdu_length);
