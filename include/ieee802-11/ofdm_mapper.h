@@ -40,7 +40,7 @@ class IEEE802_11_API ofdm_mapper : virtual public block
 public:
 	
 	typedef boost::shared_ptr<ofdm_mapper> sptr;
-	static sptr make(Encoding mcs, bool debug = false, bool fcs = false);
+	static sptr make(Encoding mcs, bool debug = false);
 	virtual void set_encoding(Encoding mcs) = 0;
 };
 

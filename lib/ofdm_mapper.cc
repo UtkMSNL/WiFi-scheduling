@@ -15,9 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * Log:
- * 2016/03/07 - Add a parameter "FCS"	- False: Do not add CRC (default, same as original code)
- *										- True: Append 4 byte CRC
- *				This is to be compatible with UwiCore work.
+ * 2016/03/07 - Add an option of adding 4-byte CRC to the input stream.
+ 	This is to be compatible with UwiCore work.
+ *	Whether the incoming data includes FCS is notified by the value of the key "crc_included".
+ *		PMT::PMT_T - CRC is included, and do not add CRC again (default, same as original code)
+ *		PMT::PMT_F - CRC is not included, which needs to be added here.
  */
 #include <ieee802-11/ofdm_mapper.h>
 #include "utils.h"
@@ -32,15 +34,14 @@ public:
 
 static const int DATA_CARRIERS = 48;
 
-ofdm_mapper_impl(Encoding e, bool debug, bool fcs) :
+ofdm_mapper_impl(Encoding e, bool debug) :
 	block ("ofdm_mapper",
 			gr::io_signature::make(0, 0, 0),
 			gr::io_signature::make(1, 1, sizeof(char))),
 			d_symbols_offset(0),
 			d_symbols(NULL),
 			d_debug(debug),
-			d_ofdm(e),
-			d_fcs(fcs) {
+			d_ofdm(e) {
 
 	message_port_register_in(pmt::mp("in"));
 	set_encoding(e);
@@ -77,20 +78,32 @@ int general_work(int noutput, gr_vector_int& ninput_items,
 
 		if(pmt::is_eof_object(msg)) {
 			dout << "MAPPER: exiting" << std::endl;
-            return -1;
+			return -1;
 		}
 
 		if(pmt::is_pair(msg)) {
 			dout << "OFDM MAPPER: received new message" << std::endl;
 			gr::thread::scoped_lock lock(d_mutex);
+			bool crc_included;
+			
+			// check if crc has been included before
+			pmt::pmt_t crc_enabled = pmt::dict_ref(pmt::car(msg), pmt::mp("crc_included"), pmt::mp("crc_included"));
+			if(pmt::eq(crc_enabled, pmt::PMT_T)) {
+				dout << "FCS is included before OFDM mapper" << std::endl;
+				crc_included = true;
+			}
+			else {
+				dout << "No FCS, append 4 bytes here in OFDM mapper" << std::endl;
+				crc_included = false;
+			}
 			
 			int psdu_length = pmt::blob_length(pmt::cdr(msg));
 			const char *psdu1 = static_cast<const char*>(pmt::blob_data(pmt::cdr(msg)));
-			if(d_fcs == true) {
+			if(crc_included == false) {
 				psdu_length += 4; // insert 4 bytes FCS here
 			}
 			char *psdu 			= (char*) calloc(psdu_length, sizeof(char));
-			if(d_fcs == true) {
+			if(crc_included == false) {
 				dout << "OFDM mapper: Append CRC32 here" << std::endl;
 				//compute and store FCS - Frame Check Sequence (32 bit CRC)
 				boost::crc_32_type result;
@@ -204,12 +217,11 @@ private:
 	char*        d_symbols;
 	int          d_symbols_offset;
 	int          d_symbols_len;
-	bool		 d_fcs;
 	ofdm_param   d_ofdm;
 	gr::thread::mutex d_mutex;
 };
 
 ofdm_mapper::sptr
-ofdm_mapper::make(Encoding mcs, bool debug, bool fcs) {
-	return gnuradio::get_initial_sptr(new ofdm_mapper_impl(mcs, debug, fcs));
+ofdm_mapper::make(Encoding mcs, bool debug) {
+	return gnuradio::get_initial_sptr(new ofdm_mapper_impl(mcs, debug));
 }
