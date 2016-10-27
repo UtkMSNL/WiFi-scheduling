@@ -1,8 +1,8 @@
 Greetings,
 
-TThis project evaluates the efficiency and overhead of wireless network scheduling. In this project, WiFi device dynamically adapts its date rate through rate adaptation protocol, such as Minstrel and Adaptive Auto Rate Fallback (AARF). Once the data rate changes, device will notify its neighbors with the new data rate. Upon receiving such notification, neighbors set their own backoff window time accordingly, in order to maximize the overall network throughput. In this case, we denote the overhead of scheduling as the number of data rate notification frames.
+This project evaluates the efficiency and overhead of wireless network scheduling. In this project, WiFi device dynamically adapts its date rate through rate adaptation protocol, such as Minstrel and Adaptive Auto Rate Fallback (AARF). Once the data rate changes, device will notify its neighbors with the new data rate. Upon receiving such notification, neighbors set their own backoff window time accordingly, in order to maximize the overall network throughput. In this case, we denote the overhead of scheduling as the number of data rate notification frames.
 
-This project is built upon GNURadio/USRP platform. The project implements the complete IEEE802.11 protocol, which includes PHY (Based on 2), MAC (Based on 3)), and rate adaptation approaches. The rate adaptation approaches includes Minstrel and Adaptive Auto Rate Fallback (AARF).
+This project works on GNURadio/USRP platform. The project implements the complete IEEE802.11 protocol, which includes PHY (Based on 2), MAC (Based on 3)), and rate adaptation approaches. The rate adaptation approaches includes Minstrel and Adaptive Auto Rate Fallback (AARF).
  
  
 To use this project, please cite the following literatures:
