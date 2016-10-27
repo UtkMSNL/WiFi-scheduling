@@ -1,0 +1,10 @@
+build
+examples/*.py
+grc/*.xml~
+lib/*.cc~
+lib/*.h~
+.cproject
+.project
+.pydevproject
+.settings
+*.pyc
