@@ -1,6 +1,10 @@
 Hi,
 
-To use this libraray, please cite the following literatures:
+This project evaluates the efficiency of wireless network scheduling. In this project, WiFi device notifies its neighbors with its new data rate after adapting its data rate to the instantaneous channel condition. The neighbors set their own backoff window time accordingly, in order to maximize the overall network throughput.
+
+This project is built upon GNURadio/USRP platform. The project implements the complete IEEE802.11 protocol, which includes PHY (Based on 2), MAC (Based on 3)), and rate adaptation approaches. The rate adaptation approaches includes Minstrel and Adaptive Auto Rate Fallback (AARF).
+ 
+To use this project, please cite the following literatures:
 
 1) @inproceedings{lu2016scheduling,
   title={Scheduling Dynamic Wireless Networks with Limited Operations},
@@ -31,7 +35,6 @@ To use this libraray, please cite the following literatures:
 For installation of GNURadio and library, please refer to (https://github.com/bastibl/gr-ieee802-11/).
 
 # Further information
-
-For further information please contact
+For details of the project, please refer to the paper 1). If you have any further questions, please contact
 Haoyang Lu, (hlu9@utk.edu)
 University of Tennessee
